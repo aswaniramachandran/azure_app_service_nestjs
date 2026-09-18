@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+// const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const API_BASE = 'https://aswani-product-api-fghbcjgbf4hyhaa3.indiasouthcentral-01.azurewebsites.net';
 const LOW_STOCK_THRESHOLD = 5;
 
 const formatCurrency = (value) => new Intl.NumberFormat('en-US', {
