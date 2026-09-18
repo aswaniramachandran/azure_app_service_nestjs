@@ -59,7 +59,7 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'aswani-nestjs-product-api'
+          app-name: 'aswani-product-api'
           slot-name: 'Production'
           package: .
           
