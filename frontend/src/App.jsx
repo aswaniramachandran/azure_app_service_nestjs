@@ -17,7 +17,9 @@ async function apiRequest(path, options = {}) {
     ...options,
   });
   if (!response.ok) throw new Error((await response.text()) || `Request failed (${response.status})`);
-  return response.status === 204 ? null : response.json();
+  if (response.status === 204) return null;
+  const contentType = response.headers.get('content-type') || '';
+  return contentType.includes('application/json') ? response.json() : response.text();
 }
 
 function Sidebar() {
