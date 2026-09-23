@@ -5,7 +5,9 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors();
+  app.enableCors({
+    origin: 'https://orange-wave-044864c10.5.azurestaticapps.net',
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
