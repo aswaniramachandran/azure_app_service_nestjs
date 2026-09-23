@@ -9,8 +9,11 @@ const formatCurrency = (value) => new Intl.NumberFormat('en-US', {
 }).format(Number(value) || 0);
 
 async function apiRequest(path, options = {}) {
+  const headers = options.body instanceof FormData
+    ? options.headers
+    : { 'Content-Type': 'application/json', ...options.headers };
   const response = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...options.headers },
+    headers,
     ...options,
   });
   if (!response.ok) throw new Error((await response.text()) || `Request failed (${response.status})`);
@@ -74,7 +77,21 @@ function ProductModal({ product, onClose, onSaved }) {
     }
     setSaving(true); setError('');
     try {
-      await apiRequest(product ? `/products/${product.id}` : '/products', { method: product ? 'PATCH' : 'POST', body: JSON.stringify(payload) });
+      let imageUrl;
+      if (imageFile) {
+        const uploadData = new FormData();
+        uploadData.append('file', imageFile);
+        const uploadResult = await apiRequest('/storage/upload', {
+          method: 'POST',
+          body: uploadData,
+        });
+        imageUrl = typeof uploadResult === 'string'
+          ? uploadResult
+          : uploadResult?.imageUrl || uploadResult?.url || uploadResult?.reference;
+        if (!imageUrl) throw new Error('The image upload did not return an image reference.');
+      }
+      const productPayload = imageUrl ? { ...payload, imageUrl } : payload;
+      await apiRequest(product ? `/products/${product.id}` : '/products', { method: product ? 'PATCH' : 'POST', body: JSON.stringify(productPayload) });
       await onSaved();
     } catch { setError('Unable to save this product. Please try again.'); } finally { setSaving(false); }
   }
