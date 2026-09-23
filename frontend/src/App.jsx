@@ -35,14 +35,42 @@ function Summary({ products }) {
 
 function ProductModal({ product, onClose, onSaved }) {
   const [form, setForm] = useState({ name: product?.name || '', price: product?.price ?? '', quantity: product?.quantity ?? '' });
+  const [imageFile, setImageFile] = useState(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
   const update = (event) => setForm({ ...form, [event.target.name]: event.target.value });
+  const updateImage = (event) => {
+    const file = event.target.files?.[0] || null;
+    if (!file) {
+      setImageFile(null);
+      return;
+    }
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    const mimeTypeAllowed = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type);
+    if (!allowedExtensions.includes(extension) || (!mimeTypeAllowed && file.type)) {
+      setError('Only JPG, JPEG, PNG, and WEBP image files are allowed.');
+      event.target.value = '';
+      setImageFile(null);
+      return;
+    }
+    setError('');
+    setImageFile(file);
+  };
   async function submit(event) {
     event.preventDefault();
     const payload = { name: form.name.trim(), price: Number(form.price), quantity: Number(form.quantity) };
     if (!payload.name || payload.price < 0 || payload.quantity < 0 || !Number.isFinite(payload.price) || !Number.isInteger(payload.quantity)) {
       setError('Enter a name, a valid non-negative price, and a whole-number quantity.'); return;
+    }
+    if (imageFile) {
+      const allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+      const extension = imageFile.name.split('.').pop()?.toLowerCase();
+      const mimeTypeAllowed = ['image/jpeg', 'image/png', 'image/webp'].includes(imageFile.type);
+      if (!allowedExtensions.includes(extension) || (!mimeTypeAllowed && imageFile.type)) {
+        setError('Only JPG, JPEG, PNG, and WEBP image files are allowed.');
+        return;
+      }
     }
     setSaving(true); setError('');
     try {
@@ -50,7 +78,7 @@ function ProductModal({ product, onClose, onSaved }) {
       await onSaved();
     } catch { setError('Unable to save this product. Please try again.'); } finally { setSaving(false); }
   }
-  return <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button className="close-button" onClick={onClose} aria-label="Close dialog">×</button><p className="eyebrow">{product ? 'UPDATE PRODUCT' : 'NEW PRODUCT'}</p><h2 id="modal-title">{product ? 'Edit product' : 'Add a product'}</h2><p className="modal-subtitle">Add a product to your inventory catalog.</p><form onSubmit={submit}><label>Product name<input name="name" value={form.name} onChange={update} required maxLength="120" placeholder="e.g. Wireless headphones" autoFocus /></label><div className="form-row"><label>Price<input name="price" value={form.price} onChange={update} required min="0" step="0.01" type="number" placeholder="0.00" /></label><label>Quantity<input name="quantity" value={form.quantity} onChange={update} required min="0" step="1" type="number" placeholder="0" /></label></div><p className="form-error">{error}</p><div className="modal-actions"><button type="button" className="secondary-button" onClick={onClose}>Cancel</button><button type="submit" className="primary-button" disabled={saving}>{saving ? 'Saving...' : 'Save product'}</button></div></form></section></div>;
+  return <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><section className="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button className="close-button" onClick={onClose} aria-label="Close dialog">×</button><p className="eyebrow">{product ? 'UPDATE PRODUCT' : 'NEW PRODUCT'}</p><h2 id="modal-title">{product ? 'Edit product' : 'Add a product'}</h2><p className="modal-subtitle">Add a product to your inventory catalog.</p><form onSubmit={submit}><label>Product name<input name="name" value={form.name} onChange={update} required maxLength="120" placeholder="e.g. Wireless headphones" autoFocus /></label><div className="form-row"><label>Price<input name="price" value={form.price} onChange={update} required min="0" step="0.01" type="number" placeholder="0.00" /></label><label>Quantity<input name="quantity" value={form.quantity} onChange={update} required min="0" step="1" type="number" placeholder="0" /></label></div><label>Product Image<input type="file" name="image" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" onChange={updateImage} /></label><p className="form-error">{error}</p><div className="modal-actions"><button type="button" className="secondary-button" onClick={onClose}>Cancel</button><button type="submit" className="primary-button" disabled={saving}>{saving ? 'Saving...' : 'Save product'}</button></div></form></section></div>;
 }
 
 function App() {
