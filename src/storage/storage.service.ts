@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { BlobServiceClient } from '@azure/storage-blob';
+import { type Multer } from 'multer';
 
 @Injectable()
 export class StorageService {
@@ -17,5 +18,26 @@ export class StorageService {
 
     this.blobServiceClient =
       BlobServiceClient.fromConnectionString(connectionString);
+  }
+
+  async uploadFile(file: any): Promise<string> {
+    const containerName =
+      process.env.AZURE_STORAGE_CONTAINER_NAME;
+
+    const containerClient =
+      this.blobServiceClient.getContainerClient(containerName!);
+
+    const blobName = `${Date.now()}-${file.originalname}`;
+
+    const blockBlobClient =
+      containerClient.getBlockBlobClient(blobName);
+
+    await blockBlobClient.uploadData(file.buffer, {
+      blobHTTPHeaders: {
+        blobContentType: file.mimetype,
+      },
+    });
+
+    return blockBlobClient.url;
   }
 }
