@@ -6,16 +6,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    origin: (requestOrigin, callback) => {
-      const isLocalOrigin = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(requestOrigin || '');
-      const isAzureStaticWebAppOrigin = /^https:\/\/[a-z0-9-]+\.azurestaticapps\.net$/i.test(requestOrigin || '');
-
-      if (!requestOrigin || isLocalOrigin || isAzureStaticWebAppOrigin) {
-        callback(null, true);
-        return;
-      }
-      callback(new Error('Origin is not allowed by CORS'), false);
-    },
+    origin: true,
     methods: ['GET', 'HEAD', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
