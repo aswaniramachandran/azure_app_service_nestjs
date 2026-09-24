@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 
-// const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-const API_BASE = 'https://aswani-product-api-fghbcjgbf4hyhaa3.indiasouthcentral-01.azurewebsites.net';
+const API_BASE = import.meta.env.VITE_API_URL
+  || (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : 'https://aswani-product-api-fghbcjgbf4hyhaa3.indiasouthcentral-01.azurewebsites.net');
 const LOW_STOCK_THRESHOLD = 5;
 
 const formatCurrency = (value) => new Intl.NumberFormat('en-US', {
@@ -22,11 +24,53 @@ async function apiRequest(path, options = {}) {
   return contentType.includes('application/json') ? response.json() : response.text();
 }
 
-function Sidebar() {
+function AuthScreen({ onAuthenticated }) {
+  const [mode, setMode] = useState('login');
+  const [form, setForm] = useState({ name: '', email: '', password: '' });
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const update = (event) => setForm({ ...form, [event.target.name]: event.target.value });
+
+  async function submit(event) {
+    event.preventDefault();
+    setError('');
+    setMessage('');
+    setSubmitting(true);
+    try {
+      if (mode === 'register') {
+        await apiRequest('/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({ name: form.name.trim(), email: form.email.trim(), password: form.password }),
+        });
+        setMode('login');
+        setForm({ ...form, name: '' });
+        setMessage('Account created successfully. You can now sign in.');
+      } else {
+        const result = await apiRequest('/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email: form.email.trim(), password: form.password }),
+        });
+        if (!result?.access_token) throw new Error('Login did not return an access token.');
+        localStorage.setItem('access_token', result.access_token);
+        onAuthenticated();
+      }
+    } catch (requestError) {
+      setError(requestError.message || 'Something went wrong. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return <main className="auth-shell"><section className="auth-visual"><a className="auth-brand" href="#"><span className="brand-mark"><span /><span /><span /></span><span>stockroom</span></a><div className="auth-visual-copy"><p className="eyebrow">INVENTORY, SIMPLIFIED</p><h1>Make every item<br /><em>count.</em></h1><p>Stay in control of your products, your stock, and your next big move.</p><div className="auth-preview"><span className="preview-dot purple" /><span className="preview-dot orange" /><span className="preview-dot green" /><div className="preview-lines"><i /><i /><i /></div><strong>Inventory overview</strong></div></div><span className="auth-orb orb-one" /><span className="auth-orb orb-two" /></section><section className="auth-panel"><div className="auth-card"><div className="auth-mobile-brand"><span className="brand-mark"><span /><span /><span /></span><span>stockroom</span></div><p className="eyebrow">{mode === 'login' ? 'WELCOME BACK' : 'GET STARTED'}</p><h2>{mode === 'login' ? 'Sign in to your workspace' : 'Create your account'}</h2><p className="auth-subtitle">{mode === 'login' ? 'Enter your details to continue managing inventory.' : 'Set up your workspace in a few simple steps.'}</p><div className="auth-tabs" role="tablist"><button className={mode === 'login' ? 'active' : ''} onClick={() => { setMode('login'); setError(''); setMessage(''); }} role="tab" aria-selected={mode === 'login'}>Sign in</button><button className={mode === 'register' ? 'active' : ''} onClick={() => { setMode('register'); setError(''); setMessage(''); }} role="tab" aria-selected={mode === 'register'}>Register</button></div><form className="auth-form" onSubmit={submit}>{mode === 'register' && <label>Full name<input name="name" value={form.name} onChange={update} required placeholder="Your name" autoComplete="name" /></label>}<label>Email address<input name="email" type="email" value={form.email} onChange={update} required placeholder="you@example.com" autoComplete="email" /></label><label>Password<input name="password" type="password" value={form.password} onChange={update} required minLength={mode === 'register' ? 6 : undefined} placeholder="Enter your password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} /></label>{error && <p className="auth-error" role="alert">{error}</p>}{message && <p className="auth-success" role="status">{message}</p>}<button className="auth-submit" type="submit" disabled={submitting}>{submitting ? 'Please wait...' : mode === 'login' ? 'Sign in' : 'Create account'}<span>→</span></button></form><p className="auth-footer">{mode === 'login' ? 'New to stockroom? ' : 'Already have an account? '}<button onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); setError(''); setMessage(''); }}>{mode === 'login' ? 'Create an account' : 'Sign in instead'}</button></p></div></section></main>;
+}
+
+function Sidebar({ onLogout }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   return <aside className="sidebar">
     <a className="brand" href="#"><span className="brand-mark"><span /><span /><span /></span><span>stockroom</span></a>
     <nav className="side-nav" aria-label="Main navigation"><a className="nav-item active" href="#inventory"><span className="nav-icon">▦</span>Inventory</a><a className="nav-item" href="#reports"><span className="nav-icon">⌁</span>Reports</a></nav>
-    <div className="sidebar-bottom"><div className="tip-card"><span className="tip-spark">✦</span><strong>Keep your stock moving</strong><p>Review low-stock products daily to stay ahead.</p></div><div className="user-chip"><span className="avatar">A</span><span><b>Admin</b><small>Workspace owner</small></span><span className="more">•••</span></div></div>
+    <div className="sidebar-bottom"><div className="tip-card"><span className="tip-spark">✦</span><strong>Keep your stock moving</strong><p>Review low-stock products daily to stay ahead.</p></div><div className="profile-menu"><button className="user-chip" onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-haspopup="menu"><span className="avatar">A</span><span><b>Admin</b><small>Workspace owner</small></span><span className="more">•••</span></button>{menuOpen && <div className="profile-dropdown" role="menu"><button role="menuitem" onClick={() => setMenuOpen(false)}>⚙ Settings</button><button role="menuitem" onClick={onLogout}>↪ Log out</button></div>}</div></div>
   </aside>;
 }
 
@@ -101,6 +145,7 @@ function ProductModal({ product, onClose, onSaved }) {
 }
 
 function App() {
+  const [authenticated, setAuthenticated] = useState(() => Boolean(localStorage.getItem('access_token')));
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
   const [modalProduct, setModalProduct] = useState(undefined);
@@ -119,7 +164,8 @@ function App() {
     if (!window.confirm(`Delete "${product.name}"?`)) return;
     try { await apiRequest(`/products/${product.id}`, { method: 'DELETE' }); await loadProducts(); } catch { setStatus('Unable to delete this product. Please try again.'); }
   }
-  return <div className="app-shell"><Sidebar /><main className="main-content" id="inventory"><header className="topbar"><div className="breadcrumb"><span>Workspace</span><b>/</b><strong>Inventory</strong></div><div className="top-actions"><button className="icon-button" aria-label="Notifications">♧<i /></button><button className="avatar avatar-small" aria-label="Account">A</button></div></header><section className="page-heading"><div><p className="eyebrow">PRODUCT CATALOG</p><h1>Inventory overview</h1><p className="subtitle">Manage your products and keep an eye on what needs attention.</p></div><button className="primary-button" onClick={() => setModalProduct(null)}><span>+</span> Add product</button></section><Summary products={products} /><section className="inventory-panel"><div className="panel-header"><div><h2>All products</h2><span className="result-count">{loading ? 'Loading products...' : `${visibleProducts.length} ${visibleProducts.length === 1 ? 'product' : 'products'}`}</span></div><div className="toolbar"><label className="search-box"><span>⌕</span><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search products..." /></label><button className="filter-button" onClick={loadProducts} disabled={loading}>↻ <span>Refresh</span></button></div></div>{status && <div className="status-message" role="status">{status}</div>}{visibleProducts.length ? <div className="table-wrap"><table><thead><tr><th>PRODUCT</th><th>PRICE</th><th>QUANTITY</th><th>STOCK STATUS</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{visibleProducts.map((product) => { const quantity = Number(product.quantity); const statusClass = quantity === 0 ? 'out-stock' : quantity <= LOW_STOCK_THRESHOLD ? 'low-stock-badge' : 'in-stock'; const label = quantity === 0 ? 'Out of stock' : quantity <= LOW_STOCK_THRESHOLD ? 'Low stock' : 'In stock'; return <tr key={product.id}><td><div className="product-details">{product.imageUrl && <img className="product-image" src={product.imageUrl} alt="" />}<span><span className="product-name">{product.name}</span><span className="product-id">ID #{product.id}</span></span></div></td><td>{formatCurrency(product.price)}</td><td>{quantity.toLocaleString()}</td><td><span className={`badge ${statusClass}`}>{label}</span></td><td><div className="actions"><button className="action-button" onClick={() => setModalProduct(product)} aria-label={`Edit ${product.name}`}>✎</button><button className="action-button delete" onClick={() => deleteProduct(product)} aria-label={`Delete ${product.name}`}>⌫</button></div></td></tr>; })}</tbody></table></div> : <div className="empty-state"><div className="empty-icon">▦</div><h3>{status ? 'Products unavailable' : 'No products found'}</h3><p>{status ? 'Start the NestJS API and refresh this page.' : 'Try another search or add your first product.'}</p><button className="secondary-button" onClick={() => setModalProduct(null)}>{status ? 'Add product' : 'Add product'}</button></div>}</section><p className="footer-note">Stockroom inventory <span>•</span> Connected to Products API</p></main>{modalProduct !== undefined && <ProductModal product={modalProduct} onClose={() => setModalProduct(undefined)} onSaved={async () => { setModalProduct(undefined); await loadProducts(); }} />}</div>;
+  if (!authenticated) return <AuthScreen onAuthenticated={() => setAuthenticated(true)} />;
+  return <div className="app-shell"><Sidebar onLogout={() => { localStorage.removeItem('access_token'); setAuthenticated(false); }} /><main className="main-content" id="inventory"><header className="topbar"><div className="breadcrumb"><span>Workspace</span><b>/</b><strong>Inventory</strong></div><div className="top-actions"><button className="icon-button" aria-label="Notifications">♧<i /></button><button className="avatar avatar-small" aria-label="Account">A</button></div></header><section className="page-heading"><div><p className="eyebrow">PRODUCT CATALOG</p><h1>Inventory overview</h1><p className="subtitle">Manage your products and keep an eye on what needs attention.</p></div><button className="primary-button" onClick={() => setModalProduct(null)}><span>+</span> Add product</button></section><Summary products={products} /><section className="inventory-panel"><div className="panel-header"><div><h2>All products</h2><span className="result-count">{loading ? 'Loading products...' : `${visibleProducts.length} ${visibleProducts.length === 1 ? 'product' : 'products'}`}</span></div><div className="toolbar"><label className="search-box"><span>⌕</span><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search products..." /></label><button className="filter-button" onClick={loadProducts} disabled={loading}>↻ <span>Refresh</span></button></div></div>{status && <div className="status-message" role="status">{status}</div>}{visibleProducts.length ? <div className="table-wrap"><table><thead><tr><th>PRODUCT</th><th>PRICE</th><th>QUANTITY</th><th>STOCK STATUS</th><th><span className="sr-only">Actions</span></th></tr></thead><tbody>{visibleProducts.map((product) => { const quantity = Number(product.quantity); const statusClass = quantity === 0 ? 'out-stock' : quantity <= LOW_STOCK_THRESHOLD ? 'low-stock-badge' : 'in-stock'; const label = quantity === 0 ? 'Out of stock' : quantity <= LOW_STOCK_THRESHOLD ? 'Low stock' : 'In stock'; return <tr key={product.id}><td><div className="product-details">{product.imageUrl && <img className="product-image" src={product.imageUrl} alt="" />}<span><span className="product-name">{product.name}</span><span className="product-id">ID #{product.id}</span></span></div></td><td>{formatCurrency(product.price)}</td><td>{quantity.toLocaleString()}</td><td><span className={`badge ${statusClass}`}>{label}</span></td><td><div className="actions"><button className="action-button" onClick={() => setModalProduct(product)} aria-label={`Edit ${product.name}`}>✎</button><button className="action-button delete" onClick={() => deleteProduct(product)} aria-label={`Delete ${product.name}`}>⌫</button></div></td></tr>; })}</tbody></table></div> : <div className="empty-state"><div className="empty-icon">▦</div><h3>{status ? 'Products unavailable' : 'No products found'}</h3><p>{status ? 'Start the NestJS API and refresh this page.' : 'Try another search or add your first product.'}</p><button className="secondary-button" onClick={() => setModalProduct(null)}>{status ? 'Add product' : 'Add product'}</button></div>}</section><p className="footer-note">Stockroom inventory <span>•</span> Connected to Products API</p></main>{modalProduct !== undefined && <ProductModal product={modalProduct} onClose={() => setModalProduct(undefined)} onSaved={async () => { setModalProduct(undefined); await loadProducts(); }} />}</div>;
 }
 
 export default App;

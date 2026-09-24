@@ -5,6 +5,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProductsModule } from './products/products.module';
 import { Product } from './products/product.entity';
 import { StorageModule } from './storage/storage.module';
+import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -25,18 +27,23 @@ import { StorageModule } from './storage/storage.module';
         database: configService.get<string>('DB_NAME'),
 
         entities: [Product],
+       //local development
+        autoLoadEntities: true,
 
         synchronize: true,
 
         // Azure PostgreSQL requires SSL/TLS
-        ssl: {
-          rejectUnauthorized: false,
-        },
+        // ssl: {
+        //   rejectUnauthorized: false,
+        // },
       }),
     }),
 
     ProductsModule,
     StorageModule,
+    AuthModule,
+
+    UsersModule,
   ],
 })
 export class AppModule {}
