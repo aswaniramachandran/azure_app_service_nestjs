@@ -2,20 +2,47 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { Product } from "./product.entity";
+import { RedisService } from "../redis/redis.service";
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private repo: Repository<Product>,
+
+    private redisService: RedisService,
   ) {}
 
   create(data: any) {
     return this.repo.save(data);
   }
 
-  findAll() {
-    return this.repo.find();
+  async findAll() {
+    const redis = this.redisService.getClient();
+
+    // 1. Check Redis
+    const cachedProducts = await redis.get("products");
+
+    if (cachedProducts) {
+      console.log("Products returned from Redis");
+
+      return JSON.parse(cachedProducts);
+    }
+
+    // 2. Redis miss → get from PostgreSQL
+    console.log("Products returned from PostgreSQL");
+
+    const products = await this.repo.find();
+
+    // 3. Store result in Redis for 60 seconds
+    await redis.set(
+      "products",
+      JSON.stringify(products),
+      "EX",
+      60,
+    );
+
+    return products;
   }
 
   findOne(id: number) {
@@ -24,11 +51,21 @@ export class ProductsService {
     });
   }
 
-  update(id: number, data: any) {
-    return this.repo.update(id, data);
+  async update(id: number, data: any) {
+    const result = await this.repo.update(id, data);
+
+    // Remove old cached product list
+    await this.redisService.getClient().del("products");
+
+    return result;
   }
 
-  remove(id: number) {
-    return this.repo.delete(id);
+  async remove(id: number) {
+    const result = await this.repo.delete(id);
+
+    // Remove old cached product list
+    await this.redisService.getClient().del("products");
+
+    return result;
   }
 }

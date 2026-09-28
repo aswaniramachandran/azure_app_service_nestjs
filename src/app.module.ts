@@ -8,6 +8,7 @@ import { User } from './users/user.entity';
 import { StorageModule } from './storage/storage.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { RedisService } from './redis/redis.service';
 
 @Module({
   imports: [
@@ -45,5 +46,6 @@ import { UsersModule } from './users/users.module';
 
     UsersModule,
   ],
+  providers: [RedisService],
 })
 export class AppModule {}
