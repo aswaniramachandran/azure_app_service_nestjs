@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { StorageService } from './storage.service';
-import { StorageController } from './storage.controller';
+import { KeyVaultModule } from '../key-vault/key-vault.module';
 
 @Module({
-  controllers: [StorageController],
+  imports: [KeyVaultModule],
   providers: [StorageService],
   exports: [StorageService],
 })
