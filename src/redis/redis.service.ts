@@ -1,82 +1,104 @@
 
-// import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-// import Redis from 'ioredis';
-// import { DefaultAzureCredential } from '@azure/identity';
-
-// @Injectable()
-// export class RedisService implements OnModuleInit, OnModuleDestroy {
-//   private redis!: Redis;
-
-//   async onModuleInit() {
-//     const credential = new DefaultAzureCredential();
-//     const token = await credential.getToken('https://redis.azure.com/.default');
-
-//     this.redis = new Redis({
-//       host: process.env.REDIS_HOST,
-//       port: Number(process.env.REDIS_PORT),
-//       username: process.env.REDIS_USERNAME?.trim(),
-//       password: token.token,
-//       tls: { servername: process.env.REDIS_HOST },
-//     });
-
-//     this.redis.on('error', (err) => console.error('Redis error:', err.message));
-
-//     await this.redis.ping();
-//     console.log('Redis connected successfully');
-//   }
-
-//   async onModuleDestroy() {
-//     await this.redis.quit();
-//   }
-
-//   getClient() {
-//     return this.redis;
-//   }
-// }
 
 
-
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Cluster } from 'ioredis';
-import { DefaultAzureCredential } from '@azure/identity';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
+import Redis from 'ioredis';
 
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
-  private redis!: Cluster;
+  private readonly logger = new Logger(RedisService.name);
+  private redis?: Redis;
+  private redisUnavailableLogged = false;
 
-  async onModuleInit() {
-    const credential = new DefaultAzureCredential();
-    const token = await credential.getToken('https://redis.azure.com/.default');
+  async onModuleInit(): Promise<void> {
+    const host = process.env.REDIS_HOST?.trim();
+    const port = Number(process.env.REDIS_PORT || 10000);
+    const username = process.env.REDIS_USERNAME?.trim() || 'default';
+    const password = process.env.REDIS_PASSWORD;
 
-    this.redis = new Cluster(
-      [
-        {
-          host: process.env.REDIS_HOST!,
-          port: Number(process.env.REDIS_PORT),
-        },
-      ],
-      {
-        redisOptions: {
-          username: process.env.REDIS_USERNAME?.trim(),
-          password: token.token,
-          tls: { servername: process.env.REDIS_HOST },
-        },
-        dnsLookup: (address, cb) => cb(null, address), // keep the hostname for TLS
-        slotsRefreshTimeout: 5000,
+    // Validate Redis configuration
+    if (!host) {
+      throw new Error('REDIS_HOST must be configured');
+    }
+
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+      throw new Error('REDIS_PORT must be a valid port number');
+    }
+
+    if (!password) {
+      throw new Error('REDIS_PASSWORD must be configured');
+    }
+
+    // Connect to Azure Managed Redis using access-key authentication
+    this.redis = new Redis({
+      host,
+      port,
+      username,
+      password,
+      tls: {
+        servername: host,
       },
-    );
+      connectTimeout: 10000,
+      retryStrategy: (attempt: number) => {
+        return Math.min(attempt * 1000, 10000);
+      },
+      maxRetriesPerRequest: 3,
+    });
 
-    this.redis.on('error', (err) => console.error('Redis error:', err.message));
+    this.redis.on('connect', () => {
+      this.logger.log('Connecting to Azure Redis...');
+    });
 
-    await this.redis.ping();
-    console.log('Redis connected successfully');
+    this.redis.on('error', (error: Error) => {
+      if (this.redisUnavailableLogged) {
+        return;
+      }
+
+      this.redisUnavailableLogged = true;
+
+      this.logger.warn(
+        `Redis connection unavailable; reconnecting: ${error.message}`,
+      );
+    });
+
+    this.redis.on('ready', () => {
+      this.redisUnavailableLogged = false;
+      this.logger.log('Redis connection restored and ready');
+    });
+
+    try {
+      await this.redis.ping();
+      this.logger.log('Redis connected successfully');
+    } catch (error) {
+      this.logger.error(
+        'Initial Redis connection failed. Check the host, network, and authentication settings.',
+      );
+
+      throw error;
+    }
   }
 
-  async onModuleDestroy() {
-    await this.redis.quit();
+  async onModuleDestroy(): Promise<void> {
+    if (this.redis) {
+      try {
+        await this.redis.quit();
+        this.logger.log('Redis connection closed');
+      } catch {
+        this.redis.disconnect();
+      }
+    }
   }
 
-  getClient() {
+  getClient(): Redis {
+    if (!this.redis) {
+      throw new Error('Redis client is not initialized');
+    }
+
     return this.redis;
   }
 }

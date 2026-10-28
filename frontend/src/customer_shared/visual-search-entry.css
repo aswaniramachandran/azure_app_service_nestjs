@@ -1,0 +1,8 @@
+.store-image-search-button{height:34px;flex:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;border:1px solid #e1dcff;border-radius:6px;background:#f5f3ff;color:#6047ff;cursor:pointer;font:700 10px "DM Sans",Arial,sans-serif;transition:background .15s,border-color .15s}
+.store-image-search-button:hover:not(:disabled){border-color:#c5bbff;background:#eeebff}
+.store-image-search-button:disabled{opacity:.65;cursor:progress}
+.store-image-search-button:focus-visible{outline:2px solid #6047ff;outline-offset:2px}
+.store-image-search-button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.7}
+.store-image-search-input{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;clip-path:inset(50%)}
+.store-image-search-error{position:fixed;z-index:1100;top:106px;right:16px;max-width:min(360px,calc(100vw - 32px));padding:10px 13px;border:1px solid #f0c4ca;border-radius:6px;background:#fff;color:#bd3544;box-shadow:0 6px 20px #101b3120;font-size:11px}
+@media(max-width:650px){.store-image-search-button{order:2;width:34px;padding:0}.store-image-search-button span{display:none}.store-image-search-button svg{width:17px;height:17px}}

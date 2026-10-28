@@ -1,0 +1,9 @@
+export const initialCoupons = [
+  { id: 'cpn-1', code: 'WELCOME10', name: 'New Customer Offer', type: 'Percentage', value: 10, minimumOrder: 50, maximumDiscount: 100, usageLimit: 500, used: 128, startDate: '2026-01-01', expiryDate: '2026-10-31', status: 'Active', usage: [{ date: 'Apr 28, 2025', order: 'ORD-1047', amount: 14 }, { date: 'Apr 25, 2025', order: 'ORD-1042', amount: 12.5 }, { date: 'Apr 22, 2025', order: 'ORD-1038', amount: 15 }] },
+  { id: 'cpn-2', code: 'SAVE200', name: 'Flat Discount', type: 'Fixed Amount', value: 200, minimumOrder: 1000, maximumDiscount: 200, usageLimit: 200, used: 54, startDate: '2026-01-01', expiryDate: '2026-12-31', status: 'Active', usage: [{ date: 'Apr 28, 2025', order: 'ORD-1046', amount: 200 }, { date: 'Apr 22, 2025', order: 'ORD-1032', amount: 200 }] },
+  { id: 'cpn-3', code: 'BOAT50', name: 'Special Offer', type: 'Percentage', value: 50, minimumOrder: 0, maximumDiscount: 150, usageLimit: 200, used: 201, startDate: '2026-01-01', expiryDate: '2026-09-30', status: 'Active', usage: [{ date: 'Apr 28, 2025', order: 'ORD-1045', amount: 75 }] },
+  { id: 'cpn-4', code: 'NEWUSER', name: 'For New Customers', type: 'Percentage', value: 15, minimumOrder: 75, maximumDiscount: 75, usageLimit: 100, used: 10, startDate: '2026-01-01', expiryDate: '2026-12-31', status: 'Active', usage: [{ date: 'Apr 25, 2025', order: 'ORD-1041', amount: 13.35 }] },
+  { id: 'cpn-5', code: 'FLASH100', name: 'Limited Time Offer', type: 'Fixed Amount', value: 100, minimumOrder: 500, maximumDiscount: 100, usageLimit: 100, used: 100, startDate: '2026-01-01', expiryDate: '2026-09-30', status: 'Expired', usage: [{ date: 'Apr 23, 2025', order: 'ORD-1038', amount: 100 }] },
+];
+
+export const couponPages = ['Coupons', 'Coupon List', 'Create Coupon', 'Coupon Details', 'Edit Coupon'];

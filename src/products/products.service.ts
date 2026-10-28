@@ -1,99 +1,35 @@
-// import { Injectable } from "@nestjs/common";
-// import { InjectRepository } from "@nestjs/typeorm";
-// import { Repository } from "typeorm";
-// import { Product } from "./product.entity";
-// import { RedisService } from "../redis/redis.service";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Filter, Repository } from "typeorm";
 
-// @Injectable()
-// export class ProductsService {
-//   constructor(
-//     @InjectRepository(Product)
-//     private repo: Repository<Product>,
+import { Product } from "./product.entity";
+import { RedisService } from "../redis/redis.service";
+import { StorageService } from "../storage/storage.service";
+import { SearchProductsDto } from "./dto/search-products.dto";
+import { Category } from "../categories/category.entity";
+import { applySearch } from "../utils/search.util";
+import { applyFilters, QueryFilter } from "../utils/filter.util";
+import { applySort } from "../utils/sort.util";
+import { applyPagination } from "../utils/pagination.util";
+import { createPaginationResponse } from "../utils/response.util";
+import { Brand } from "../brands/brand.entity";
 
-//     private redisService: RedisService,
-//   ) {}
-
-//   create(data: any) {
-//     return this.repo.save(data);
-//   }
-
-//   async findAll() {
-//     const redis = this.redisService.getClient();
-
-//     // 1. Check Redis
-//     const cachedProducts = await redis.get("products");
-
-//     if (cachedProducts) {
-//       console.log("Products returned from Redis");
-
-//       return JSON.parse(cachedProducts);
-//     }
-
-//     // 2. Redis miss → get from PostgreSQL
-//     console.log("Products returned from PostgreSQL");
-
-//     const products = await this.repo.find();
-
-//     // 3. Store result in Redis for 60 seconds
-//     await redis.set(
-//       "products",
-//       JSON.stringify(products),
-//       "EX",
-//       60,
-//     );
-
-//     return products;
-//   }
-
-//   findOne(id: number) {
-//     return this.repo.findOneBy({
-//       id,
-//     });
-//   }
-
-//   async update(id: number, data: any) {
-//     const result = await this.repo.update(id, data);
-
-//     // Remove old cached product list
-//     await this.redisService.getClient().del("products");
-
-//     return result;
-//   }
-
-//   async remove(id: number) {
-//     const result = await this.repo.delete(id);
-
-//     // Remove old cached product list
-//     await this.redisService.getClient().del("products");
-
-//     return result;
-//   }
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-
-import { Product } from './product.entity';
-import { RedisService } from '../redis/redis.service';
-import { StorageService } from '../storage/storage.service';
+const LOW_STOCK_THRESHOLD = 5;
 
 @Injectable()
 export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private repo: Repository<Product>,
+    @InjectRepository(Category)
+    private categoryRepo: Repository<Category>,
+
+    @InjectRepository(Brand)
+    private brandRepo: Repository<Brand>,
 
     private redisService: RedisService,
 
@@ -101,93 +37,241 @@ export class ProductsService {
   ) {}
 
   async create(data: any, image?: any) {
-    // Upload image to Azure Blob Storage
+    if (data.categoryId !== undefined && data.categoryId !== "") {
+      const category = await this.categoryRepo.findOne({
+        where: {
+          id: Number(data.categoryId),
+        },
+      });
+
+      if (!category) {
+        throw new BadRequestException("Category not found");
+      }
+
+      data.categoryId = Number(data.categoryId);
+    } else {
+      data.categoryId = null;
+    }
+
+      if (data.brandId !== undefined && data.brandId !== "") {
+    const brand = await this.brandRepo.findOne({
+      where: {
+        id: Number(data.brandId),
+      },
+    });
+
+    if (!brand) {
+      throw new BadRequestException("Brand not found");
+    }
+
+    data.brandId = Number(data.brandId);
+  } else {
+    data.brandId = null;
+  }
+
     if (image) {
-      const imageUrl =
-        await this.storageService.uploadFile(image);
+      const imageUrl = await this.storageService.uploadFile(image);
 
       data.imageUrl = imageUrl;
     }
 
-    // Save product to PostgreSQL
     const product = await this.repo.save(data);
 
-    // Clear Redis cache
-    await this.redisService
-      .getClient()
-      .del('products');
+    await this.redisService.getClient().del("products");
 
     return product;
   }
 
-  async findAll() {
-    const redis = this.redisService.getClient();
+  async findAll(query: SearchProductsDto = {}) {
+    const qb = this.repo.createQueryBuilder("p");
 
-    // Check Redis
-    const cachedProducts =
-      await redis.get('products');
+    // SEARCH
+    applySearch(qb, query, ["p.name", "p.id", "p.price", "p.quantity"]);
 
-    if (cachedProducts) {
-      console.log(
-        'Products returned from Redis',
-      );
+    // FILTER
 
-      return JSON.parse(cachedProducts);
+    // FILTERS
+    const filters: QueryFilter[] = [];
+
+    // Category filter
+    if (query.categoryId) {
+      filters.push({
+        field: "p.categoryId",
+        operator: "=",
+        value: query.categoryId,
+      });
     }
 
-    // Redis miss → PostgreSQL
-    console.log(
-      'Products returned from PostgreSQL',
-    );
 
-    const products =
-      await this.repo.find();
+    // Brand filter
+if (query.brandId) {
+  filters.push({
+    field: 'p.brandId',
+    operator: '=',
+    value: query.brandId,
+  });
+}
 
-    // Store in Redis for 60 seconds
-    await redis.set(
-      'products',
-      JSON.stringify(products),
-      'EX',
-      60,
-    );
+    // Stock filters
+    if (query.stock === "out") {
+      filters.push({
+        field: "p.quantity",
+        operator: "=",
+        value: 0,
+      });
+    }
 
-    return products;
+    if (query.stock === "low") {
+      filters.push({
+        field: "p.quantity",
+        operator: ">",
+        value: 0,
+      });
+
+      filters.push({
+        field: "p.quantity",
+        operator: "<=",
+        value: 5,
+      });
+    }
+
+    if (query.stock === "in") {
+      filters.push({
+        field: "p.quantity",
+        operator: ">",
+        value: 5,
+      });
+    }
+
+    if (query.minPrice !== undefined) {
+  filters.push({
+    field: 'p.price',
+    operator: '>=',
+    value: query.minPrice,
+  });
+}
+
+if (query.maxPrice !== undefined) {
+  filters.push({
+    field: 'p.price',
+    operator: '<=',
+    value: query.maxPrice,
+  });
+}
+
+    applyFilters(qb, filters);
+
+    
+    // SORT
+    const { sortBy, sortOrder } = applySort(qb, query, {
+      id: "p.id",
+      name: "p.name",
+      price: "p.price",
+      quantity: "p.quantity",
+    });
+
+    // PAGINATION
+    applyPagination(qb, query);
+
+    // DATABASE
+    const [products, total] = await qb.getManyAndCount();
+
+    // RESPONSE
+    return createPaginationResponse(products, total, query, sortBy, sortOrder);
   }
+
+  // =========================
+  // FIND ONE PRODUCT
+  // =========================
 
   findOne(id: number) {
     return this.repo.findOneBy({
       id,
     });
   }
+  async update(id: number, body: any, image?: any) {
+    const existing = await this.findOne(id);
 
-  async update(
-    id: number,
-    data: any,
-  ) {
-    const result =
-      await this.repo.update(
-        id,
-        data,
-      );
+    if (!existing) {
+      throw new NotFoundException("Product not found");
+    }
 
-    // Remove old cached product list
-    await this.redisService
-      .getClient()
-      .del('products');
+    const data: any = {};
 
-    return result;
+    if (body.name !== undefined) {
+      data.name = body.name;
+    }
+
+    if (body.price !== undefined) {
+      data.price = Number(body.price);
+    }
+
+    if (body.quantity !== undefined) {
+      data.quantity = Number(body.quantity);
+    }
+
+    if (body.categoryId !== undefined && body.categoryId !== "") {
+      const category = await this.categoryRepo.findOne({
+        where: {
+          id: Number(body.categoryId),
+        },
+      });
+
+      if (!category) {
+        throw new BadRequestException("Category not found");
+      }
+
+      data.categoryId = Number(body.categoryId);
+    }
+
+    if (body.categoryId === "") {
+      data.categoryId = null;
+    }
+
+
+    if (body.brandId !== undefined && body.brandId !== "") {
+  const brand = await this.brandRepo.findOne({
+    where: {
+      id: Number(body.brandId),
+    },
+  });
+
+  if (!brand) {
+    throw new BadRequestException("Brand not found");
+  }
+
+  data.brandId = Number(body.brandId);
+}
+
+if (body.brandId === "") {
+  data.brandId = null;
+}
+
+    if (image) {
+      data.imageUrl = await this.storageService.uploadFile(image);
+    }
+
+    if (Object.keys(data).length > 0) {
+      await this.repo.update(id, data);
+    }
+
+    if (image && existing.imageUrl) {
+      await this.storageService.deleteFile(existing.imageUrl);
+    }
+
+    await this.redisService.getClient().del("products");
+
+    return this.findOne(id);
   }
 
   async remove(id: number) {
-    const result =
-      await this.repo.delete(id);
+    const existing = await this.findOne(id);
+    if (!existing) throw new NotFoundException("Product not found");
 
-    // Remove old cached product list
-    await this.redisService
-      .getClient()
-      .del('products');
+    const result = await this.repo.delete(id);
+    await this.storageService.deleteFile(existing.imageUrl);
+    await this.redisService.getClient().del("products");
 
     return result;
   }
 }
-

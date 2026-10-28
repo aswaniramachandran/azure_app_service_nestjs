@@ -1,3 +1,4 @@
+
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -14,9 +15,7 @@ import { RefreshToken } from './refresh-token.entity';
   imports: [
     UsersModule,
 
-    PassportModule.register({
-      defaultStrategy: 'jwt',
-    }),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
 
     ConfigModule,
 
@@ -42,5 +41,7 @@ import { RefreshToken } from './refresh-token.entity';
     AuthService,
     JwtStrategy,
   ],
+
+  exports: [PassportModule, JwtModule],
 })
 export class AuthModule {}

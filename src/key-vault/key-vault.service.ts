@@ -10,7 +10,7 @@ export class KeyVaultService {
     const credential = new DefaultAzureCredential();
 
     this.client = new SecretClient(
-      'https://aswani-product-keyvault.vault.azure.net/',
+      'https://aswani-product-keyvaults.vault.azure.net',
       credential,
     );
   }

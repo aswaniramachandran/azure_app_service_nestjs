@@ -1,0 +1,54 @@
+.cot-page{max-width:1120px;min-height:490px;margin:0 auto;padding:10px 0 28px;color:#17243d}
+.cot-back{padding:0;border:0;background:transparent;cursor:pointer}
+.cot-hero{margin-bottom:10px}
+.cot-message{margin:8px 0;padding:10px 12px;border:1px solid #e4e8f3;border-radius:7px;background:#f7f8ff;color:#53627b;font-size:12px}
+.cot-error{border-color:#ffd5da;background:#fff6f7;color:#b23e4a}
+.cot-status-card,.cot-map-card,.cot-history-card{margin-bottom:10px;padding:16px;border:1px solid #e8edf5;border-radius:9px;background:#fff;box-shadow:0 3px 12px #17243d08}
+.cot-status-card{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.cot-status-card>div:first-child{display:grid;gap:6px}
+.cot-eyebrow{color:#8793a8;font-size:10px;font-weight:800;letter-spacing:.08em}
+.cot-status{width:max-content;padding:5px 10px;border-radius:15px;background:#e9efff;color:#526fce;font-size:12px}
+.cot-status-card small,.cot-note{color:#7886a0;font-size:11px}
+.cot-actions{display:flex;flex-wrap:wrap;gap:8px}
+.cot-actions button,.cot-map-heading button{min-height:38px;padding:0 14px;border:1px solid #e3e7f0;border-radius:7px;background:#fff;color:#53627b;font-size:12px;font-weight:700;cursor:pointer}
+.cot-actions .cot-start{border-color:#604bff;background:#604bff;color:#fff}
+.cot-actions button:disabled{cursor:not-allowed;opacity:.52}
+.cot-note{margin:8px 0 0}
+.cot-map-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.cot-map-heading h2,.cot-history-card h2{margin:0;color:#26344e;font-size:16px}
+.cot-map-heading p{margin:5px 0 0;color:#7886a0;font-size:12px}
+.cot-map-heading button{min-height:32px}
+.cot-map-wrap{position:relative;min-height:320px;overflow:hidden;border-radius:8px;background:#eef2f5}
+.cot-map-loading{display:grid;place-items:center}
+.cot-map{width:100%;height:420px;min-height:320px}
+.cot-map-message{position:absolute;z-index:1;top:12px;left:12px;margin:0;padding:8px 11px;border-radius:6px;background:#fff;color:#59677e;font-size:12px;box-shadow:0 2px 8px #17243d20}
+.cot-map-legend{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:12px;color:#617089;font-size:11px}
+.cot-map-legend>span{display:inline-flex;align-items:center;gap:6px}
+.cot-map-legend i{width:10px;height:10px;display:inline-block;border-radius:50%}
+.cot-legend-you{background:#604bff}.cot-legend-destination{background:#e25563}
+.cot-map-legend small,.cot-map-empty,.cot-history-card>p{color:#8995a9;font-size:11px}
+.cot-route-summary{display:flex;flex-wrap:wrap;gap:16px;margin:12px 0 0;color:#7886a0;font-size:11px}
+.cot-route-summary b{color:#34425b}
+.cot-coordinates{margin:8px 0 0;color:#8995a9;font-size:10px}
+.cot-history-card ol{display:grid;gap:0;margin:12px 0 0;padding:0;list-style:none}
+.cot-history-card li{position:relative;display:flex;gap:10px;padding:0 0 14px}
+.cot-history-card li:not(:last-child):before{position:absolute;top:11px;bottom:0;left:4px;width:1px;background:#e4e8f1;content:""}
+.cot-history-dot{z-index:1;width:9px;height:9px;flex:none;margin-top:3px;border-radius:50%;background:#604bff}
+.cot-history-card li strong{color:#34425b;font-size:12px}
+.cot-history-card li p{margin:3px 0;color:#7886a0;font-size:11px}
+.cot-history-card li small{color:#939eb0;font-size:10px}
+@media(max-width:1180px){.cot-page{margin-right:30px;margin-left:30px}}
+@media(max-width:800px){.cot-page{margin-right:20px;margin-left:20px}}
+@media(max-width:600px){
+  .cot-page{margin:0;padding:8px 12px 20px}
+  .cot-status-card{align-items:flex-start;flex-direction:column}
+  .cot-actions{width:100%}
+  .cot-actions button{flex:1}
+  .cot-map-card,.cot-history-card,.cot-status-card{padding:12px}
+  .cot-map-wrap{min-height:300px}
+  .cot-map{height:340px;min-height:300px}
+  .cot-map-heading{align-items:flex-start}
+  .cot-map-heading h2,.cot-history-card h2{font-size:14px}
+  .co-order-detail-actions{align-items:flex-end;flex-direction:column;gap:7px}
+  .co-order-detail-actions .co-view-details{font-size:10px}
+}

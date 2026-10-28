@@ -1,0 +1,52 @@
+.customer-chatbot{position:fixed;z-index:1000;right:24px;bottom:24px;font-family:"DM Sans",Arial,sans-serif;color:#17243d}
+.customer-chatbot *{box-sizing:border-box}
+.customer-chatbot-launcher{position:relative;z-index:2;width:60px;height:60px;display:grid;place-items:center;margin-left:auto;border:0;border-radius:50%;background:linear-gradient(145deg,#715cff,#503de5);color:#fff;box-shadow:0 8px 24px #503de54d;cursor:pointer;transition:transform .2s,box-shadow .2s}
+.customer-chatbot-launcher:hover{transform:translateY(-2px);box-shadow:0 12px 28px #503de566}
+.customer-chatbot-launcher svg{width:27px;height:27px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.8}
+.customer-chatbot-panel{position:absolute;right:0;bottom:74px;width:min(380px,calc(100vw - 32px));height:min(560px,calc(100dvh - 118px));min-height:340px;overflow:hidden;display:flex;flex-direction:column;border:1px solid #e9ebf3;border-radius:18px;background:#fff;box-shadow:0 18px 60px #17243d26;opacity:0;pointer-events:none;transform:translateY(12px) scale(.98);transform-origin:bottom right;visibility:hidden;transition:opacity .2s ease,transform .2s ease,visibility .2s}
+.customer-chatbot-panel.is-open{opacity:1;pointer-events:auto;transform:translateY(0) scale(1);visibility:visible}
+.customer-chatbot-header{min-height:68px;display:flex;align-items:center;gap:10px;padding:12px 14px;background:linear-gradient(110deg,#5c49ec,#7564ff);color:#fff}
+.customer-chatbot-avatar{width:38px;height:38px;display:grid;place-items:center;flex:none;border:1px solid #ffffff4d;border-radius:50%;background:#ffffff24;font-size:21px}
+.customer-chatbot-title{min-width:0;display:grid;gap:4px;margin-right:auto}
+.customer-chatbot-title strong{font-size:14px;font-weight:750;letter-spacing:.1px}
+.customer-chatbot-title small{display:flex;align-items:center;gap:5px;color:#e2deff;font-size:10px}
+.customer-chatbot-title small i{width:6px;height:6px;border-radius:50%;background:#7ef0b4}
+.customer-chatbot-new,.customer-chatbot-close{width:32px;height:32px;display:grid;place-items:center;border:0;border-radius:50%;background:#ffffff20;color:#fff;cursor:pointer;transition:background .15s}
+.customer-chatbot-new:hover,.customer-chatbot-close:hover{background:#ffffff36}
+.customer-chatbot-new{font-size:21px}
+.customer-chatbot-close{font-size:23px;font-weight:300}
+.customer-chatbot-messages{min-height:0;flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:15px;padding:18px 14px;background:#f8f9fd;overscroll-behavior:contain;scroll-behavior:smooth}
+.customer-chatbot-row{display:flex;align-items:flex-end;gap:7px;max-width:92%}
+.customer-chatbot-row.user{align-self:flex-end}
+.customer-chatbot-row.assistant{align-self:flex-start}
+.customer-chatbot-message-avatar{width:24px;height:24px;display:grid;place-items:center;flex:none;border-radius:50%;background:#eeeaff;color:#604bff;font-size:13px}
+.customer-chatbot-bubble{max-width:100%;margin:0;padding:11px 13px;border:1px solid #e9ebf3;border-radius:14px 14px 14px 4px;background:#fff;color:#3b4860;font-size:12px;line-height:1.55;overflow-wrap:anywhere;white-space:pre-wrap}
+.customer-chatbot-row.user .customer-chatbot-bubble{border-color:#604bff;border-radius:14px 14px 4px 14px;background:#604bff;color:#fff}
+.customer-chatbot-thinking{display:flex;align-items:center;gap:4px;min-width:97px;color:#71809a}
+.customer-chatbot-thinking span{margin-right:2px}
+.customer-chatbot-thinking i{width:5px;height:5px;display:block;border-radius:50%;background:#8173ed;animation:customer-chatbot-pulse 1s ease-in-out infinite}
+.customer-chatbot-thinking i:nth-of-type(2){animation-delay:.15s}
+.customer-chatbot-thinking i:nth-of-type(3){animation-delay:.3s}
+@keyframes customer-chatbot-pulse{0%,60%,100%{opacity:.4;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+.customer-chatbot-signin{padding:9px 14px 0;background:#fff;color:#604bff;font-size:11px;font-weight:700;text-decoration:none}
+.customer-chatbot-signin:hover{text-decoration:underline}
+.customer-chatbot-form{display:flex;align-items:center;gap:8px;margin:0;padding:12px 13px 8px;border-top:1px solid #eef0f5;background:#fff}
+.customer-chatbot-form input{height:42px;min-width:0;flex:1;padding:0 13px;border:1px solid #e6e9f1;border-radius:22px;outline:none;background:#f8f9fc;color:#26344e;font:inherit;font-size:12px;transition:border-color .15s,box-shadow .15s}
+.customer-chatbot-form input::placeholder{color:#929db0}
+.customer-chatbot-form input:focus{border-color:#a99cff;box-shadow:0 0 0 3px #eeeaff}
+.customer-chatbot-form button{width:42px;height:42px;display:grid;place-items:center;flex:none;border:0;border-radius:50%;background:#604bff;color:#fff;cursor:pointer;transition:background .15s,transform .15s}
+.customer-chatbot-form button:hover:not(:disabled){transform:scale(1.04);background:#503de5}
+.customer-chatbot-form button:disabled{background:#c9c5dc;cursor:not-allowed}
+.customer-chatbot-form button svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.8}
+.customer-chatbot-footnote{margin:0;padding:0 12px 10px;background:#fff;color:#a0a8b7;font-size:9px;text-align:center}
+
+@media(max-width:600px){
+  .customer-chatbot{right:16px;bottom:16px}
+  .customer-chatbot-launcher{width:56px;height:56px}
+  .customer-chatbot-panel{right:-4px;bottom:68px;width:min(380px,calc(100vw - 24px));height:min(600px,calc(100dvh - 98px));min-height:300px;border-radius:16px}
+}
+
+@media(prefers-reduced-motion:reduce){
+  .customer-chatbot-launcher,.customer-chatbot-panel,.customer-chatbot-form button{transition:none}
+  .customer-chatbot-thinking i{animation:none;opacity:.7}
+}

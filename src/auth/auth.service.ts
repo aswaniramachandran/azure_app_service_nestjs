@@ -70,10 +70,16 @@ export class AuthService {
     );
   }
 
+    if (!user.is_active) {
+    throw new UnauthorizedException('Account is disabled');
+  }
+
+
   // 1. Create access token
   const payload = {
     sub: user.id,
     email: user.email,
+    role: user.role,
   };
 
   const access_token = this.jwtService.sign(payload);
@@ -112,6 +118,8 @@ export class AuthService {
       id: user.id,
       name: user.name,
       email: user.email,
+      role: user.role,
+      permissions: user.permissions ?? [],  
     },
   };
 }
@@ -152,6 +160,7 @@ async refresh(refresh_token: string) {
   const payload = {
     sub: storedToken.user.id,
     email: storedToken.user.email,
+    role: storedToken.user.role,
   };
 
   const access_token =
@@ -191,3 +200,17 @@ async logout(refresh_token: string) {
   };
 }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
