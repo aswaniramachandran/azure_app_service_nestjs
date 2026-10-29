@@ -43,9 +43,9 @@ import { VisualSearchModule } from './visual-search/visual-search.module';
         entities: [Product, User],
         autoLoadEntities: true,
         synchronize: true,
-        ssl: { 
-          rejectUnauthorized: false
-         },
+        // ssl: { 
+        //   rejectUnauthorized: false
+        //  },
       }),
     }),
 
